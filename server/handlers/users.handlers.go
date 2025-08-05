@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"main/queries"
 	"net/http"
 	"strconv"
@@ -19,9 +20,15 @@ type UserResponse struct {
 	Email        string  `json:"email"`
 	UserType     string  `json:"userType"`
 	Nickname     *string `json:"nickname,omitempty"`
-	MessageCount int     `json:"messageCount"`
+	MessageCount int     `json:"messageCount,omitempty"`
 }
 
+type PatchUserRequest struct {
+	Username *string `json:"username"`
+	Email    *string `json:"email"`
+	UserType *string `json:"userType"`
+	Nickname *string `json:"nickname,omitempty"`
+}
 type UserMessageResponse struct {
 	ID        int    `json:"id"`
 	UserId    int    `json:"userId"`
@@ -103,6 +110,58 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 			Username: userRow.Username,
 			Email:    userRow.Email,
 			UserType: userRow.Username,
+			Nickname: nickname,
+		},
+	})
+}
+
+func (h *UserHandler) PatchUser(c *gin.Context) {
+
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Should provide valid user id: " + err.Error(),
+		})
+		return
+	}
+
+	var user PatchUserRequest
+	if err := c.ShouldBindBodyWithJSON(&user); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Bad Request: " + err.Error(),
+		})
+		return
+	}
+
+	var raw map[string]json.RawMessage
+	if err := c.ShouldBindBodyWithJSON(&raw); err != nil {
+		c.JSON(400, gin.H{"error": "invalid JSON: " + err.Error()})
+		return
+	}
+	nicknameProvided := false
+	if _, has := raw["nickname"]; has {
+		nicknameProvided = true
+	}
+
+	userRow, err := h.UserDB.PatchUser(c, userID, user.Username, user.Email, user.UserType, user.Nickname, nicknameProvided)
+
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to update user: " + err.Error(),
+		})
+		return
+	}
+
+	var nickname *string = nil
+	if userRow.Nickname.Valid {
+		nickname = &userRow.Nickname.String
+	}
+	c.JSON(http.StatusOK, CreateUserResponse{
+		User: UserResponse{
+			ID:       userRow.ID,
+			Username: userRow.Username,
+			Email:    userRow.Email,
+			UserType: userRow.UserType,
 			Nickname: nickname,
 		},
 	})

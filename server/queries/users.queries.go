@@ -84,7 +84,34 @@ func (db *UserDB) CreateUser(ctx context.Context, username, email, userType stri
 		&user.ID,
 		&user.Nickname,
 		&user.Email,
-		&userType,
+		&user.UserType,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, err
+}
+
+func (db *UserDB) PatchUser(ctx context.Context, userId int, username, email, userType, nickname *string, nicknameProvided bool) (*GetUsersQueryRow, error) {
+	var user GetUsersQueryRow
+
+	err := db.conn.QueryRow(ctx, `
+		UPDATE public.users
+      	SET
+        username  = COALESCE($1, username),
+        email     = COALESCE($2, email),
+        user_type = COALESCE($3, user_type),
+        nickname  = CASE WHEN $5 THEN $4 ELSE nickname END
+      	WHERE id = $6
+      	RETURNING id, username, nickname, email, user_type
+		`, username, email, userType, nickname, nicknameProvided, userId).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Nickname,
+		&user.Email,
+		&user.UserType,
 	)
 
 	if err != nil {
