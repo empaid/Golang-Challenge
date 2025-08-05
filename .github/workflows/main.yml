@@ -47,7 +47,10 @@ jobs:
       - name: Create & use ECS context
         run: |
           docker context rm ecs || true
-          docker context create ecs ecs --from-env --region "${{ secrets.AWS_REGION }}"
+          docker context create ecs ecs \
+            --access-key ${{ secrets.AWS_ACCESS_KEY_ID }} \
+            --secret-key ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            --region   ${{ secrets.AWS_REGION }}
           docker context use ecs
   
       - name: Build & deploy with Compose → ECS
