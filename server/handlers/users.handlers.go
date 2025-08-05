@@ -45,7 +45,7 @@ type CreateUserMessageResponse struct {
 }
 
 type UserHandler struct {
-	UserDB *queries.UserDB
+	UserDB queries.UserDBIface
 }
 
 func (h *UserHandler) GetUsers(c *gin.Context) {
@@ -109,7 +109,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 			ID:       userRow.ID,
 			Username: userRow.Username,
 			Email:    userRow.Email,
-			UserType: userRow.Username,
+			UserType: userRow.UserType,
 			Nickname: nickname,
 		},
 	})

@@ -25,6 +25,13 @@ type GetUserMessagesQueryRow struct {
 	CreatedAt time.Time `db:"created_at"`
 }
 
+type UserDBIface interface {
+	GetUsers(context.Context) ([]GetUsersQueryRow, error)
+	CreateUser(context.Context, string, string, string, *string) (*GetUsersQueryRow, error)
+	PatchUser(context.Context, int, *string, *string, *string, *string, bool) (*GetUsersQueryRow, error)
+	CreateUserMessage(context.Context, int, string) (*GetUserMessagesQueryRow, error)
+}
+
 type UserDB struct {
 	conn *pgx.Conn
 }
@@ -79,9 +86,10 @@ func (db *UserDB) GetUsers(ctx context.Context) ([]GetUsersQueryRow, error) {
 func (db *UserDB) CreateUser(ctx context.Context, username, email, userType string, nickname *string) (*GetUsersQueryRow, error) {
 	var user GetUsersQueryRow
 	err := db.conn.QueryRow(ctx, `
-		INSERT INTO public.users (username, nickname, email, user_type) VALUES ($1, $2, $3, $4) returning id, nickname, email, user_type`,
+		INSERT INTO public.users (username, nickname, email, user_type) VALUES ($1, $2, $3, $4) returning id, username, nickname, email, user_type`,
 		username, nickname, email, userType).Scan(
 		&user.ID,
+		&user.Username,
 		&user.Nickname,
 		&user.Email,
 		&user.UserType,
