@@ -29,4 +29,4 @@ build:
 
 .PHONY: test
 test:
-	go test ./server/...
+	go test ./handlers -v
