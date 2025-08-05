@@ -30,6 +30,8 @@ CREATE TABLE public.user_types (
 )
 ;
 
+ALTER TABLE public.user_types 
+    ADD CONSTRAINT unique_type_key UNIQUE(type_key);
 
 /* * * * * * * * * * * * * * * * * * * * * *
  *
@@ -49,7 +51,6 @@ INSERT INTO public.user_types
     (type_key, permission_bitfield)
  VALUES 
     ('UTYPE_USER',      B'00000000'),
-    ('UTYPE_ADMIN',     B'10000000'),
     ('UTYPE_ADMIN',     B'10000000'),
     ('UTYPE_MODERATOR', B'01000000')
 ;
