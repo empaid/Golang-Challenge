@@ -28,3 +28,32 @@ jobs:
     - name: Tear down
       if: always()
       run: docker compose down -v
+
+deploy:
+    name: Deploy to ECS
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS creds
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ap-southeast-2
+
+      - name: Create & use ECS context
+        run: |
+          docker context rm ecs || true
+          docker context create ecs ecs --from-env --region "${{ secrets.AWS_REGION }}"
+          docker context use ecs
+
+      - name: Build & deploy with Compose → ECS
+        run: docker compose up -d
+
+      - name: Restore default context
+        if: always()
+        run: docker context use default
