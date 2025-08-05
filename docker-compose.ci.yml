@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+
+  database:
+    image: "${ECR_REGISTRY}/${DB_REPO}:${IMAGE_TAG}"
+
+  golang:
+    image: "${ECR_REGISTRY}/${GO_REPO}:${IMAGE_TAG}"
