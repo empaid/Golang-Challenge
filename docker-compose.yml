@@ -1,6 +1,7 @@
 services:
 
   database:
+    image: "${ECR_REGISTRY}/${DB_REPO}:${IMAGE_TAG}"
     build:
       context: .
       dockerfile: ./docker/database.Dockerfile
@@ -15,6 +16,7 @@ services:
       - POSTGRES_PASSWORD=super_secure_password
 
   golang:
+    image: "${ECR_REGISTRY}/${GO_REPO}:${IMAGE_TAG}"
     build:
       context: .
       dockerfile: ./docker/golang.Dockerfile
