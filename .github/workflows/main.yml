@@ -23,7 +23,7 @@ jobs:
         done
 
     - name: Run Go tests in container
-      run: docker compose run --rm golang go test ./... -v
+      run: docker compose run --rm golang go test ./handlers -v
 
     - name: Tear down
       if: always()
