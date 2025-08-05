@@ -1,0 +1,131 @@
+{
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-2:679277546324:task-definition/Container:2",
+    "containerDefinitions": [
+        {
+            "name": "example_exercise_golang_tools",
+            "image": "679277546324.dkr.ecr.ap-southeast-2.amazonaws.com/go-learn",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "container-port",
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "JWT_SIGNING_SECRET_KEY",
+                    "value": "JWT_SIGNING_SECRET_KEY=\"password_secret\""
+                },
+                {
+                    "name": "DB_CONNECTION_STRING",
+                    "value": "postgres://super_secure_username:super_secure_password@database:5432/exercise?sslmode=disable"
+                }
+            ],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/Container",
+                    "awslogs-create-group": "true",
+                    "awslogs-region": "ap-southeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        },
+        {
+            "name": "database",
+            "image": "679277546324.dkr.ecr.ap-southeast-2.amazonaws.com/database",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "database-port",
+                    "containerPort": 5432,
+                    "hostPort": 5432,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "POSTGRES_USER",
+                    "value": "super_secure_username"
+                },
+                {
+                    "name": "POSTGRES_PASSWORD",
+                    "value": "super_secure_password"
+                },
+                {
+                    "name": "POSTGRES_DB",
+                    "value": "exercise"
+                }
+            ],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "systemControls": []
+        }
+    ],
+    "family": "Container",
+    "taskRoleArn": "arn:aws:iam::679277546324:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::679277546324:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "revision": 2,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "3072",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "registeredAt": "2025-08-05T19:16:35.820Z",
+    "registeredBy": "arn:aws:iam::679277546324:root",
+    "enableFaultInjection": false,
+    "tags": []
+}
