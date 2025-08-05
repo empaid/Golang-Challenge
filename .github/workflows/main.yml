@@ -73,7 +73,7 @@ jobs:
         id: td-db
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ecs-task-def.json
+          task-definition: Container.json
           container-name:  database
           image:           ${{ steps.push-db.outputs.db_image }}
 
