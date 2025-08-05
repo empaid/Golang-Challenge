@@ -19,9 +19,13 @@ type UserResponse struct {
 	Nickname *string `json:"nickname,omitempty"`
 }
 
-func GetUsers(c *gin.Context) {
+type UserHandler struct {
+	UserDB *queries.UserDB
+}
 
-	userRows, err := queries.GetUsers()
+func (h *UserHandler) GetUsers(c *gin.Context) {
+
+	userRows, err := h.UserDB.GetUsers(c)
 
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -33,7 +37,7 @@ func GetUsers(c *gin.Context) {
 	var users []UserResponse = []UserResponse{}
 	for _, row := range userRows {
 
-		var nickname *string = nil 
+		var nickname *string = nil
 		if row.Nickname.Valid {
 			nickname = &row.Nickname.String
 		}

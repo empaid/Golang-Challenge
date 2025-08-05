@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -15,11 +16,15 @@ type GetUsersQueryRow struct {
 	PermissionBitfield string      `db:"permission_bitfield"`
 }
 
-func GetUsers() ([]GetUsersQueryRow, error) {
-	conn := GetConnection()
-	defer conn.Close(context.TODO())
+type UserDB struct {
+	conn *pgx.Conn
+}
 
-	rows, err := conn.Query(context.TODO(), `
+func (db *UserDB) GetUsers(ctx context.Context) ([]GetUsersQueryRow, error) {
+	// conn := GetConnection()
+	// defer conn.Close(context.TODO())
+
+	rows, err := db.conn.Query(ctx, `
 		SELECT
 			public.users.id, 
 			public.users.username, 
