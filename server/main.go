@@ -21,10 +21,10 @@ func main() {
 	}
 
 	users := r.Group("/users")
+	users.POST("", userHandler.CreateUser)
 	users.Use(middleware.JWTAuth())
 	{
 		users.GET("", userHandler.GetUsers)
-		users.POST("", userHandler.CreateUser)
 		users.POST("/:id/messages", userHandler.CreateUserMessage)
 		users.PATCH("/:id", userHandler.PatchUser)
 
