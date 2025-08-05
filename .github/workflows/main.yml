@@ -75,7 +75,7 @@ jobs:
             # Build both images as per docker-compose.yml
             docker compose build
             # Push both to ECR
-            docker-compose push
+            docker compose push
 
       # first injection: database container
       - name: Render task def (database)
