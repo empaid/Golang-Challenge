@@ -73,7 +73,7 @@ jobs:
             export GO_REPO
             export IMAGE_TAG
             # Build both images as per docker-compose.yml
-            docker-compose build
+            docker compose build
             # Push both to ECR
             docker-compose push
 
