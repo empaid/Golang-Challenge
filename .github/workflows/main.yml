@@ -7,27 +7,27 @@ on:
     branches: [ main, master ]
 
 jobs:
-  # test-go:
-  #   runs-on: ubuntu-latest
+  test-go:
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #   - name: Check out code
-  #     uses: actions/checkout@v3
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
 
-  #   - name: Build & start database
-  #     run: |
-  #       docker compose up -d database
-  #       until docker compose exec database pg_isready -U test; do
-  #         echo "Waiting for database…"
-  #         sleep 2
-  #       done
+    - name: Build & start database
+      run: |
+        docker compose up -d database
+        until docker compose exec database pg_isready -U test; do
+          echo "Waiting for database…"
+          sleep 2
+        done
 
-  #   - name: Run Go tests in container
-  #     run: docker compose run --rm golang go test ./server/handlers -v
+    - name: Run Go tests in container
+      run: docker compose run --rm golang go test ./server/handlers -v
 
-  #   - name: Tear down
-  #     if: always()
-  #     run: docker compose down -v
+    - name: Tear down
+      if: always()
+      run: docker compose down -v
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
@@ -67,7 +67,7 @@ jobs:
             echo "db_image=$ECR_REGISTRY/$DB_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
             echo "go_image=$ECR_REGISTRY/$GO_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      # first injection: database container
+      
       - name: Render task def (database)
         id: td-db
         uses: aws-actions/amazon-ecs-render-task-definition@v1
@@ -76,7 +76,6 @@ jobs:
           container-name:  database
           image:            ${{ steps.login-ecr.outputs.registry }}/${{ env.DB_REPO }}:${{ env.IMAGE_TAG }}
 
-      # second injection: golang container (uses output from previous)
       - name: Render task def (golang)
         id: td-go
         uses: aws-actions/amazon-ecs-render-task-definition@v1
