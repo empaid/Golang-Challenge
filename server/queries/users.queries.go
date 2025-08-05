@@ -2,6 +2,7 @@ package queries
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -14,6 +15,14 @@ type GetUsersQueryRow struct {
 	UserType           string      `db:"user_type"`
 	Nickname           pgtype.Text `db:"nickname"`
 	PermissionBitfield string      `db:"permission_bitfield"`
+	MessageCount       int         `db:"message_count"`
+}
+
+type GetUserMessagesQueryRow struct {
+	ID        int       `db:"id"`
+	UserId    int       `db:"user_id"`
+	Message   string    `db:"message"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 type UserDB struct {
@@ -31,7 +40,8 @@ func (db *UserDB) GetUsers(ctx context.Context) ([]GetUsersQueryRow, error) {
 			public.users.email,
 			utype.type_key as "user_type",
 			public.users.nickname,
-			utype.permission_bitfield::text as "permission_bitfield"
+			utype.permission_bitfield::text as "permission_bitfield",
+			(SELECT COUNT(*) FROM public.user_messages WHERE public.user_messages.user_id = public.users.id) as "message_count"
 		from 
 			public.users 
 		left join 
@@ -56,6 +66,7 @@ func (db *UserDB) GetUsers(ctx context.Context) ([]GetUsersQueryRow, error) {
 			&user.UserType,
 			&user.Nickname,
 			&user.PermissionBitfield,
+			&user.MessageCount,
 		); err != nil {
 			return nil, err
 		}
@@ -81,4 +92,22 @@ func (db *UserDB) CreateUser(ctx context.Context, username, email, userType stri
 	}
 
 	return &user, err
+}
+
+func (db *UserDB) CreateUserMessage(ctx context.Context, userId int, message string) (*GetUserMessagesQueryRow, error) {
+	var userMessage GetUserMessagesQueryRow
+	err := db.conn.QueryRow(ctx, `
+		INSERT INTO public.user_messages (user_id, message) VALUES ($1, $2) returning id, user_id, message, created_at`,
+		userId, message).Scan(
+		&userMessage.ID,
+		&userMessage.UserId,
+		&userMessage.Message,
+		&userMessage.CreatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &userMessage, err
 }

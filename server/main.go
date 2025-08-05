@@ -20,6 +20,6 @@ func main() {
 	}
 	r.GET("/users", userHandler.GetUsers)
 	r.POST("/users", userHandler.CreateUser)
-
+	r.POST("/users/:id/messages", userHandler.CreateUserMessage)
 	r.Run()
 }

@@ -33,6 +33,15 @@ CREATE TABLE public.user_types (
 ALTER TABLE public.user_types 
     ADD CONSTRAINT unique_type_key UNIQUE(type_key);
 
+
+CREATE TABLE public.user_messages (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    message TEXT NOT NULL,
+    created_at timestamp(0) with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+);
+
 /* * * * * * * * * * * * * * * * * * * * * *
  *
  *          DATA

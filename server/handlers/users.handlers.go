@@ -3,6 +3,8 @@ package handlers
 import (
 	"main/queries"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,15 +14,27 @@ type GetUsersResponse struct {
 }
 
 type UserResponse struct {
-	ID       int     `json:"id"`
-	Username string  `json:"username"`
-	Email    string  `json:"email"`
-	UserType string  `json:"userType"`
-	Nickname *string `json:"nickname,omitempty"`
+	ID           int     `json:"id"`
+	Username     string  `json:"username"`
+	Email        string  `json:"email"`
+	UserType     string  `json:"userType"`
+	Nickname     *string `json:"nickname,omitempty"`
+	MessageCount int     `json:"messageCount"`
+}
+
+type UserMessageResponse struct {
+	ID        int    `json:"id"`
+	UserId    int    `json:"userId"`
+	Message   string `json:"message"`
+	CreatedAt string `json:"createdAt"`
 }
 
 type CreateUserResponse struct {
 	User UserResponse `json:"user"`
+}
+
+type CreateUserMessageResponse struct {
+	UserMessage UserMessageResponse `json:"userMessage"`
 }
 
 type UserHandler struct {
@@ -47,11 +61,12 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 		}
 
 		users = append(users, UserResponse{
-			ID:       row.ID,
-			Username: row.Username,
-			Email:    row.Email,
-			UserType: row.UserType,
-			Nickname: nickname,
+			ID:           row.ID,
+			Username:     row.Username,
+			Email:        row.Email,
+			UserType:     row.UserType,
+			Nickname:     nickname,
+			MessageCount: row.MessageCount,
 		})
 	}
 
@@ -89,6 +104,43 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 			Email:    userRow.Email,
 			UserType: userRow.Username,
 			Nickname: nickname,
+		},
+	})
+}
+
+func (h *UserHandler) CreateUserMessage(c *gin.Context) {
+
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Should provide valid user id: " + err.Error(),
+		})
+		return
+	}
+
+	var userMessage UserMessageResponse
+	if err := c.ShouldBindBodyWithJSON(&userMessage); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Bad Request: " + err.Error(),
+		})
+		return
+	}
+
+	userMessageRow, err := h.UserDB.CreateUserMessage(c, userID, userMessage.Message)
+
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to create user message: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, CreateUserMessageResponse{
+		UserMessage: UserMessageResponse{
+			ID:        userMessageRow.ID,
+			UserId:    userMessageRow.UserId,
+			Message:   userMessageRow.Message,
+			CreatedAt: userMessageRow.CreatedAt.Format(time.RFC3339),
 		},
 	})
 }
