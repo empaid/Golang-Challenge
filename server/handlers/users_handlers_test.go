@@ -18,22 +18,26 @@ import (
 
 type mockStore struct {
 	getUsersFn   func(context.Context) ([]queries.GetUsersQueryRow, error)
-	createUserFn func(context.Context, string, string, string, *string) (*queries.GetUsersQueryRow, error)
+	createUserFn func(context.Context, string, string, string, *string, []byte) (*queries.GetUsersQueryRow, error)
 }
 
 func (m *mockStore) GetUsers(ctx context.Context) ([]queries.GetUsersQueryRow, error) {
 	return m.getUsersFn(ctx)
 }
 
-func (m *mockStore) CreateUser(ctx context.Context, username, email, userType string, nickname *string) (*queries.GetUsersQueryRow, error) {
-	return m.createUserFn(ctx, username, email, userType, nickname)
+func (m *mockStore) CreateUser(ctx context.Context, username, email, userType string, nickname *string, password []byte) (*queries.GetUsersQueryRow, error) {
+	return m.createUserFn(ctx, username, email, userType, nickname, password)
 }
 
 func (m *mockStore) PatchUser(context.Context, int, *string, *string, *string, *string, bool) (*queries.GetUsersQueryRow, error) {
-	panic("not implemented")
+	panic("TODO")
 }
 func (m *mockStore) CreateUserMessage(context.Context, int, string) (*queries.GetUserMessagesQueryRow, error) {
-	panic("not implemented")
+	panic("TODO")
+}
+
+func (m *mockStore) FetchUserFromEmail(context.Context, string) (*queries.GetUsersQueryRow, error) {
+	panic("TODO")
 }
 
 func TestGetUsers(t *testing.T) {
@@ -113,21 +117,21 @@ func TestCreateUser(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		stub       func(context.Context, string, string, string, *string) (*queries.GetUsersQueryRow, error)
+		stub       func(context.Context, string, string, string, *string, []byte) (*queries.GetUsersQueryRow, error)
 		payload    string
 		expectCode int
 		validate   func(*testing.T, []byte)
 	}{
 		{
 			name: "successful creation",
-			stub: func(ctx context.Context, username, email, userType string, nickname *string) (*queries.GetUsersQueryRow, error) {
+			stub: func(ctx context.Context, username, email, userType string, nickname *string, password []byte) (*queries.GetUsersQueryRow, error) {
 				return &queries.GetUsersQueryRow{
 					ID: 42, Username: username, Email: email,
 					UserType: userType,
 					Nickname: pgtype.Text{String: *nickname, Valid: true},
 				}, nil
 			},
-			payload:    `{"username":"hardik","email":"hardikpurohit26@gmail.com","userType":"UTYPE_USER","nickname":"hardik_nic"}`,
+			payload:    `{"username":"hardik","email":"hardikpurohit26@gmail.com","userType":"UTYPE_USER","nickname":"hardik_nic", "password":"test_pass"}`,
 			expectCode: http.StatusOK,
 			validate: func(t *testing.T, body []byte) {
 				var resp struct {
@@ -144,7 +148,7 @@ func TestCreateUser(t *testing.T) {
 		},
 		{
 			name: "database error",
-			stub: func(ctx context.Context, username, email, userType string, nickname *string) (*queries.GetUsersQueryRow, error) {
+			stub: func(ctx context.Context, username, email, userType string, nickname *string, password []byte) (*queries.GetUsersQueryRow, error) {
 				return nil, errors.New("unique key violation")
 			},
 			payload:    `{"username":"hardik","email":"hardik@gmail.com","userType":"UTYPE_ADMIN"}`,

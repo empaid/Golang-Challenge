@@ -16,6 +16,7 @@ type GetUsersQueryRow struct {
 	Nickname           pgtype.Text `db:"nickname"`
 	PermissionBitfield string      `db:"permission_bitfield"`
 	MessageCount       int         `db:"message_count"`
+	Password           []byte      `db:"password"`
 }
 
 type GetUserMessagesQueryRow struct {
@@ -27,9 +28,10 @@ type GetUserMessagesQueryRow struct {
 
 type UserDBStore interface {
 	GetUsers(context.Context) ([]GetUsersQueryRow, error)
-	CreateUser(context.Context, string, string, string, *string) (*GetUsersQueryRow, error)
+	CreateUser(context.Context, string, string, string, *string, []byte) (*GetUsersQueryRow, error)
 	PatchUser(context.Context, int, *string, *string, *string, *string, bool) (*GetUsersQueryRow, error)
 	CreateUserMessage(context.Context, int, string) (*GetUserMessagesQueryRow, error)
+	FetchUserFromEmail(context.Context, string) (*GetUsersQueryRow, error)
 }
 
 type UserDB struct {
@@ -83,11 +85,11 @@ func (db *UserDB) GetUsers(ctx context.Context) ([]GetUsersQueryRow, error) {
 	return users, err
 }
 
-func (db *UserDB) CreateUser(ctx context.Context, username, email, userType string, nickname *string) (*GetUsersQueryRow, error) {
+func (db *UserDB) CreateUser(ctx context.Context, username, email, userType string, nickname *string, password []byte) (*GetUsersQueryRow, error) {
 	var user GetUsersQueryRow
 	err := db.conn.QueryRow(ctx, `
-		INSERT INTO public.users (username, nickname, email, user_type) VALUES ($1, $2, $3, $4) returning id, username, nickname, email, user_type`,
-		username, nickname, email, userType).Scan(
+		INSERT INTO public.users (username, nickname, email, user_type, password) VALUES ($1, $2, $3, $4, $5) returning id, username, nickname, email, user_type`,
+		username, nickname, email, userType, password).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Nickname,
@@ -145,4 +147,24 @@ func (db *UserDB) CreateUserMessage(ctx context.Context, userId int, message str
 	}
 
 	return &userMessage, err
+}
+
+func (db *UserDB) FetchUserFromEmail(ctx context.Context, email string) (*GetUsersQueryRow, error) {
+	var user GetUsersQueryRow
+	err := db.conn.QueryRow(ctx, `
+		SELECT id, username, nickname, email, user_type, password FROM public.users WHERE email=$1;`,
+		email).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Nickname,
+		&user.Email,
+		&user.UserType,
+		&user.Password,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, err
 }

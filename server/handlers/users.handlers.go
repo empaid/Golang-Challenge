@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"main/queries"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type GetUsersResponse struct {
@@ -21,6 +24,14 @@ type UserResponse struct {
 	UserType     string  `json:"userType"`
 	Nickname     *string `json:"nickname,omitempty"`
 	MessageCount int     `json:"messageCount,omitempty"`
+}
+
+type CreateUserRequest struct {
+	Username string  `json:"username"`
+	Email    string  `json:"email"`
+	UserType string  `json:"userType"`
+	Nickname *string `json:"nickname,omitempty"`
+	Password string  `json:"password"`
 }
 
 type PatchUserRequest struct {
@@ -42,6 +53,15 @@ type CreateUserResponse struct {
 
 type CreateUserMessageResponse struct {
 	UserMessage UserMessageResponse `json:"userMessage"`
+}
+
+type UserLoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UserLoginResponse struct {
+	Token string `json:"token"`
 }
 
 type UserHandler struct {
@@ -83,7 +103,7 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 }
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
-	var user UserResponse
+	var user CreateUserRequest
 	if err := c.ShouldBindBodyWithJSON(&user); err != nil {
 		c.JSON(400, gin.H{
 			"error": "Bad Request: " + err.Error(),
@@ -91,7 +111,15 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	userRow, err := h.UserDB.CreateUser(c, user.Username, user.Email, user.UserType, user.Nickname)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Bad Request: " + err.Error(),
+		})
+		return
+	}
+
+	userRow, err := h.UserDB.CreateUser(c, user.Username, user.Email, user.UserType, user.Nickname, hashedPassword)
 
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -117,10 +145,26 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 func (h *UserHandler) PatchUser(c *gin.Context) {
 
+	rawUserId, exists := c.Get("UserId")
+	if !exists {
+		c.JSON(500, gin.H{
+			"error": "Missing userId ",
+		})
+		return
+	}
+	authUserId := rawUserId.(int)
+
 	userID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": "Should provide valid user id: " + err.Error(),
+		})
+		return
+	}
+
+	if authUserId != userID {
+		c.JSON(401, gin.H{
+			"error": "Not Authorized ",
 		})
 		return
 	}
@@ -168,11 +212,26 @@ func (h *UserHandler) PatchUser(c *gin.Context) {
 }
 
 func (h *UserHandler) CreateUserMessage(c *gin.Context) {
+	rawUserId, exists := c.Get("UserId")
+	if !exists {
+		c.JSON(500, gin.H{
+			"error": "Missing userId ",
+		})
+		return
+	}
+	authUserId := rawUserId.(int)
 
 	userID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": "Should provide valid user id: " + err.Error(),
+		})
+		return
+	}
+
+	if authUserId != userID {
+		c.JSON(401, gin.H{
+			"error": "Not Authorized ",
 		})
 		return
 	}
@@ -201,5 +260,48 @@ func (h *UserHandler) CreateUserMessage(c *gin.Context) {
 			Message:   userMessageRow.Message,
 			CreatedAt: userMessageRow.CreatedAt.Format(time.RFC3339),
 		},
+	})
+}
+
+func (h *UserHandler) Login(c *gin.Context) {
+	var body UserLoginRequest
+	if err := c.ShouldBindBodyWithJSON(&body); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Bad Request: " + err.Error(),
+		})
+		return
+	}
+	userRow, err := h.UserDB.FetchUserFromEmail(c, body.Email)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Unable to find email",
+		})
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword(userRow.Password, []byte(body.Password))
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Incorrect Password",
+		})
+		return
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userType": userRow.UserType,
+		"id":       userRow.ID,
+	})
+
+	authToken, err := token.SignedString([]byte(os.Getenv("JWT_SIGNING_SECRET_KEY")))
+
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Error while logging in" + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, UserLoginResponse{
+		Token: authToken,
 	})
 }

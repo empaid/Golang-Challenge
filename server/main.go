@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"main/handlers"
+	"main/middleware"
 	"main/queries"
 
 	"github.com/gin-gonic/gin"
@@ -18,9 +19,17 @@ func main() {
 	userHandler := &handlers.UserHandler{
 		UserDB: queries.NewUserDB(dbConn),
 	}
-	r.GET("/users", userHandler.GetUsers)
-	r.POST("/users", userHandler.CreateUser)
-	r.POST("/users/:id/messages", userHandler.CreateUserMessage)
-	r.PATCH("/users/:id", userHandler.PatchUser)
+
+	users := r.Group("/users")
+	users.Use(middleware.JWTAuth())
+	{
+		users.GET("", userHandler.GetUsers)
+		users.POST("", userHandler.CreateUser)
+		users.POST("/:id/messages", userHandler.CreateUserMessage)
+		users.PATCH("/:id", userHandler.PatchUser)
+
+	}
+
+	r.POST("/login", userHandler.Login)
 	r.Run()
 }

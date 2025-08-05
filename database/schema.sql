@@ -19,7 +19,8 @@ CREATE TABLE public.users (
     email VARCHAR(100) NOT NULL UNIQUE,
     nickname VARCHAR(50),
     user_type VARCHAR(50) NOT NULL DEFAULT 'UTYPE_USER',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    password   BYTEA NOT NULL
 )
 ;
 
@@ -49,11 +50,11 @@ CREATE TABLE public.user_messages (
  * * * * * * * * * * * * * * * * * * * * * */
 
 INSERT INTO public.users 
-    (username, nickname, email, user_type)
+    (username, nickname, email, user_type, password)
  VALUES 
-    ('Liam', 'L dawg', 'liam@email.com', 'UTYPE_ADMIN'),
-    ('Jon', NULL, 'jon@email.com', 'UTYPE_USER'),
-    ('Myles', 'Big M', 'myles@email.com', 'UTYPE_USER')
+    ('Liam', 'L dawg', 'liam@email.com', 'UTYPE_ADMIN', 'xxx'),
+    ('Jon', NULL, 'jon@email.com', 'UTYPE_USER', 'xxx'),
+    ('Myles', 'Big M', 'myles@email.com', 'UTYPE_USER', 'xxx')
 ;
 
 INSERT INTO public.user_types 
