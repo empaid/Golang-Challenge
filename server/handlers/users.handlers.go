@@ -45,7 +45,7 @@ type CreateUserMessageResponse struct {
 }
 
 type UserHandler struct {
-	UserDB queries.UserDBIface
+	UserDB queries.UserDBStore
 }
 
 func (h *UserHandler) GetUsers(c *gin.Context) {

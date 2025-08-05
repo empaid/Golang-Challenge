@@ -25,7 +25,7 @@ type GetUserMessagesQueryRow struct {
 	CreatedAt time.Time `db:"created_at"`
 }
 
-type UserDBIface interface {
+type UserDBStore interface {
 	GetUsers(context.Context) ([]GetUsersQueryRow, error)
 	CreateUser(context.Context, string, string, string, *string) (*GetUsersQueryRow, error)
 	PatchUser(context.Context, int, *string, *string, *string, *string, bool) (*GetUsersQueryRow, error)
