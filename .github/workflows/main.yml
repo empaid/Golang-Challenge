@@ -83,7 +83,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ steps.td-db.outputs.task-definition }}
-          container-name:  golang
+          container-name:  example_exercise_golang_tools
           image:           ${{ steps.push-go.outputs.go_image }}
 
       - name: Deploy to ECS
