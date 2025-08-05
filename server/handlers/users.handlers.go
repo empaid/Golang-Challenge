@@ -19,6 +19,10 @@ type UserResponse struct {
 	Nickname *string `json:"nickname,omitempty"`
 }
 
+type CreateUserResponse struct {
+	User UserResponse `json:"user"`
+}
+
 type UserHandler struct {
 	UserDB *queries.UserDB
 }
@@ -53,5 +57,38 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 
 	c.JSON(http.StatusOK, GetUsersResponse{
 		Users: users,
+	})
+}
+
+func (h *UserHandler) CreateUser(c *gin.Context) {
+	var user UserResponse
+	if err := c.ShouldBindBodyWithJSON(&user); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Bad Request: " + err.Error(),
+		})
+		return
+	}
+
+	userRow, err := h.UserDB.CreateUser(c, user.Username, user.Email, user.UserType, user.Nickname)
+
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Failed to create user: " + err.Error(),
+		})
+		return
+	}
+
+	var nickname *string = nil
+	if userRow.Nickname.Valid {
+		nickname = &userRow.Nickname.String
+	}
+	c.JSON(http.StatusOK, CreateUserResponse{
+		User: UserResponse{
+			ID:       userRow.ID,
+			Username: userRow.Username,
+			Email:    userRow.Email,
+			UserType: userRow.Username,
+			Nickname: nickname,
+		},
 	})
 }

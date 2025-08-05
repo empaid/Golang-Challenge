@@ -64,3 +64,21 @@ func (db *UserDB) GetUsers(ctx context.Context) ([]GetUsersQueryRow, error) {
 
 	return users, err
 }
+
+func (db *UserDB) CreateUser(ctx context.Context, username, email, userType string, nickname *string) (*GetUsersQueryRow, error) {
+	var user GetUsersQueryRow
+	err := db.conn.QueryRow(ctx, `
+		INSERT INTO public.users (username, nickname, email, user_type) VALUES ($1, $2, $3, $4) returning id, nickname, email, user_type`,
+		username, nickname, email, userType).Scan(
+		&user.ID,
+		&user.Nickname,
+		&user.Email,
+		&userType,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, err
+}

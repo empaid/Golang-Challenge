@@ -19,6 +19,7 @@ func main() {
 		UserDB: queries.NewUserDB(dbConn),
 	}
 	r.GET("/users", userHandler.GetUsers)
+	r.POST("/users", userHandler.CreateUser)
 
 	r.Run()
 }
