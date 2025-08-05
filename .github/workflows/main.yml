@@ -55,7 +55,7 @@ jobs:
       - name: Build & push Database image
         id: push-db
         run: |
-          IMAGE_URI=${{ steps.login.outputs.registry }}/${{ env.DB_REPO }}:$IMAGE_TAG
+          IMAGE_URI=${{ steps.login.outputs.registry }}/database:$IMAGE_TAG
           docker build -f docker/database.Dockerfile -t $IMAGE_URI .
           docker push    $IMAGE_URI
           echo "db_image=$IMAGE_URI" >> $GITHUB_OUTPUT
@@ -63,7 +63,7 @@ jobs:
       - name: Build & push Go image
         id: push-go
         run: |
-          IMAGE_URI=${{ steps.login.outputs.registry }}/${{ env.GO_REPO }}:$IMAGE_TAG
+          IMAGE_URI=${{ steps.login.outputs.registry }}/go-learn:$IMAGE_TAG
           docker build -f docker/golang.Dockerfile -t $IMAGE_URI .
           docker push    $IMAGE_URI
           echo "go_image=$IMAGE_URI" >> $GITHUB_OUTPUT
