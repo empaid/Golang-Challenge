@@ -8,26 +8,21 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
-
-    - name: Set up Docker Compose
-      run: docker-compose version
-
-    - name: Build & start database
-      run: |
-        docker-compose up -d database
-        until docker-compose exec database pg_isready -U test; do
-          echo "Waiting for database…"
-          sleep 2
-        done
-
-    - name: Run Go tests in container
-      run: docker-compose run --rm golang make test
-
-    - name: Tear down
-      if: always()
-      run: docker-compose down -v
+      - name: Check out code
+        uses: actions/checkout@v3
+    
+      - name: Build & start database
+        run: |
+          docker compose up -d database
+          until docker compose exec database pg_isready -U test; do
+            echo "Waiting for database…"
+            sleep 2
+          done
+    
+      - name: Run Go tests in container
+        run: docker compose run --rm golang go test ./... -v
+    
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
