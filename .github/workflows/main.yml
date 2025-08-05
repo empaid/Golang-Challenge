@@ -60,9 +60,15 @@ jobs:
             export GO_REPO
             export IMAGE_TAG
             # Build both images as per docker-compose.yml
-            docker compose build
-            # Push both to ECR
-            docker compose push
+            docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.ci.yml \
+            build
+            
+            docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.ci.yml \
+            push
 
             echo "db_image=$ECR_REGISTRY/$DB_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
             echo "go_image=$ECR_REGISTRY/$GO_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
