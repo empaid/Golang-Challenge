@@ -25,3 +25,8 @@ run:
 build: 
 	$(GOLANG) go build -o bin/server server/main.go
 	echo "$(CYAN)Server built successfully."
+
+
+.PHONY: test
+test:
+	go test ./... -v
